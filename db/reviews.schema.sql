@@ -34,23 +34,10 @@ CREATE TABLE IF NOT EXISTS characteristic_reviews (
     "value" INTEGER
 );
 
-CREATE TABLE IF NOT EXISTS recommended (
-  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  "product_id" INTEGER REFERENCES reviews,
-  "recommend" BOOLEAN
+CREATE TABLE IF NOT EXISTS product (
+  "product_id" INTEGER NOT NULL PRIMARY KEY REFERENCES reviews
 );
 
-CREATE TABLE IF NOT EXISTS ratings (
-  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  "product_id" INTEGER REFERENCES reviews,
-  "ratings" INTEGER
-);
-
-CREATE TABLE IF NOT EXISTS ratings (
-  "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY AUTOINCREMENT,
-  "product_id" INTEGER REFERENCES reviews,
-  "rating" INTEGER
-);
 
 COPY reviews
 FROM
@@ -66,9 +53,3 @@ csv header;
 COPY characteristic_reviews
 FROM '/Users/utkucanozkan/Desktop/OtherProjects/Reviews/csv/characteristic_reviews.csv'
 csv header;
-
-COPY recommended
-FROM '/Users/utkucanozkan/Desktop/OtherProjects/Reviews/csv/recommended.csv' csv header;
-
-COPY ratings
-FROM '/Users/utkucanozkan/Desktop/OtherProjects/Reviews/csv/ratings.csv' csv header;

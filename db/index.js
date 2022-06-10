@@ -4,7 +4,7 @@ const { Sequelize, DataTypes } = require('sequelize')
 const Promise = require('bluebird')
 require('dotenv').config()
 // Option 1: Passing a connection URI
-const sequelize = new Sequelize(`postgres://${process.env.PGUSER}:${process.env.PGPASSWORD}@localhost:${process.env.PGPORT}/postgres`)
+const sequelize = new Sequelize(`postgres://${process.env.PGUSER}:${process.env.PGPASSWORD}@localhost:${process.env.PGPORT}/sdc`)
 sequelize.authenticate()
   .then(() => {
     console.log(`Connected to DB via Sequelize at Port ${process.env.PGPORT}`)
@@ -104,7 +104,7 @@ const Review = (data) => (
     recommend: data.recommend,
     response: data.response,
     body: data.body,
-    date: new Date(Number(data.date)).toISOString(),
+    date: new Date(Number(data.date)).toISOString().substring(0, 10),
     reviewer_name: data.reviewer_name,
     helpfulness: data.helpfulness,
     photos: []
@@ -124,7 +124,9 @@ const photosByReviewId = (review_id) => {
     attributes: ['id', 'url'],
     where: {
       review_id
-    }
+    },
+    benchmark: true,
+    logging: console.log
   })
     .then(res => res.forEach((photo) => {
       photos.push(Photo(photo))
@@ -133,13 +135,19 @@ const photosByReviewId = (review_id) => {
     .catch(err => console.log(err))
 }
 // returns a review object
-const getReviewsByProductId = (product_id) => {
+const getReviewsByProductId = (product_id, count = 5, page = 1, sort = 'rating') => {
   return Reviews.findAll({
     attributes: ['id', 'rating', 'summary', 'recommend', 'response', 'body', 'date', 'reviewer_name', 'helpfulness'],
     where: {
       product_id,
       reported: false
-    }
+    },
+    offset: ((page - 1) * count),
+    limit: count,
+    order: [[sequelize.literal(`${sort}`), 'DESC']],
+    subQuery: false,
+    benchmark: true,
+    logging: console.log
   })
     .then((res) => res.map((Review)))
     .catch(err => console.log(err))
@@ -147,10 +155,16 @@ const getReviewsByProductId = (product_id) => {
 
 // create a function that will run getReviewsByProductId first , have it return it's promise , take the reviewId
 // run photosByReviewId and return the promise , finally combine the two and return the final array
-const getReviews = (product_id) => {
+const getReviews = (product_id, count = 5, page = 1, sort = 'relevant') => {
   let reviewArr = []
-
-  return getReviewsByProductId(product_id)
+  if (sort === 'relevant') {
+    sort = 'rating'
+  } else if (sort === 'newest') {
+    sort = 'date'
+  } else if (sort === 'helpful') {
+    sort = 'helpfulness'
+  }
+  return getReviewsByProductId(product_id,count,page,sort)
     .then((res) => {
       reviewArr = res
       const array = []
