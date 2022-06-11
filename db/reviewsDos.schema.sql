@@ -103,3 +103,6 @@ ADD
 
     CREATE INDEX reviews_product_index ON reviews (product_id);
     CREATE INDEX photos_review_index ON photos (review_id);
+    CREATE INDEX characteristics_review_char_index ON characteristics_reviews (characteristics_id);
+    CREATE INDEX characteristics_review_review_index ON characteristics_reviews (review_id);
+    CREATE INDEX characteristics_product_id_index ON characteristics (product_id);

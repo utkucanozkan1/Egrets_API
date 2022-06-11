@@ -67,7 +67,6 @@ const Photos = sequelize.define('photos', {
   }
 })
 
-
 const Characteristics_Reviews = sequelize.define('characteristics_reviews', {
   id: {
     type: DataTypes.INTEGER,
@@ -95,13 +94,10 @@ const Characteristics = sequelize.define('characteristics', {
   name: {
     type: DataTypes.STRING
   }
-  // associate: (models) => {
-  //   Characteristics.belongsTo(models.Characteristic_Reviews, {
-  //     foreignKey: 'characteristic_id'
-  //   })
-  // }
 })
 
+// Characteristics.hasMany(Characteristics_Reviews,{foreignKey: 'characteristics_id'})
+// Characteristics_Reviews.belongsTo(Characteristics)
 const Review = (data) => (
   {
     review_id: data.id,
@@ -110,7 +106,7 @@ const Review = (data) => (
     recommend: data.recommend,
     response: data.response,
     body: data.body,
-    date: new Date(Number(data.date)).toISOString().substring(0, 10),
+    date: new Date(Number(data.date)).toISOString(),
     reviewer_name: data.reviewer_name,
     helpfulness: data.helpfulness,
     photos: []
@@ -121,6 +117,13 @@ const Photo = (data) => (
   {
     id: data.id,
     url: data.url
+  }
+)
+
+const Characteristics_Review = (data) => (
+  {
+    id: data.id,
+    value: data.value
   }
 )
 // returns a photo array
@@ -170,14 +173,14 @@ const getReviews = (product_id, count = 5, page = 1, sort = 'relevant') => {
   } else if (sort === 'helpful') {
     sort = 'helpfulness'
   }
-  return getReviewsByProductId(product_id,count,page,sort)
+  return getReviewsByProductId(product_id, count, page, sort)
     .then((res) => {
       reviewArr = res
       const array = []
       reviewArr.forEach((rev) => {
         array.push(photosByReviewId(rev.review_id))
       })
-      return Promise.all(array);
+      return Promise.all(array)
     })
     .then((res) => {
       res.forEach((photo, i) => {
@@ -190,40 +193,18 @@ const getReviews = (product_id, count = 5, page = 1, sort = 'relevant') => {
     })
 }
 
-const getRatingsByProductId = (product_id) => {
-  let ratingsObj = {
-    '1':0,
-    '2':0,
-    '3':0,
-    '4':0,
-    '5':0
-  }
-  return Reviews.findAll({
-    attributes: ['product_id', 'rating'],
-    where: {
-      product_id
-    },
-    benchmark: true,
-    logging: console.log
-  })
-    .then((res) => res.forEach((rating) => {
-      ratingsObj[rating.rating]++
-    }))
-    .then(() => ratingsObj)
-    .catch(err => console.log(err))
-}
-
-const getRecommendByProductId = (product_id) => {
+/// meta data Portion
+const getMetaData = (product_id) => {
   const recommendedObj = {
-    "true":0,
-    "false":0
+    true: 0,
+    false: 0
   }
   const ratingsObj = {
-    '1':0,
-    '2':0,
-    '3':0,
-    '4':0,
-    '5':0
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0
   }
   const obj = {}
   return Reviews.findAll({
@@ -243,31 +224,20 @@ const getRecommendByProductId = (product_id) => {
       obj.recommended = recommendedObj
     })
     .then(() => {
-      return obj
+      return getCharByProductId(product_id)
+        .then((res) => {
+          obj.characteristics = res
+        })
+        .catch(err => console.log(err))
     })
-    .catch(err => console.log(err))
-}
-// this is returning an array of review IDs for a specific productID
-const getReviewsByReviewId = (product_id) => {
-  const reviewIdArr = []
-  return Reviews.findAll({
-    attributes: ['id'],
-    where: {
-      product_id,
-      reported: false
-    }
-  })
-    .then((res) => res.forEach((review) => {
-      reviewIdArr.push(review.id)
-    }))
-    .then(() => reviewIdArr)
+    .then(() => obj)
     .catch(err => console.log(err))
 }
 
 const getCharReviewByCharId = (characteristics_id) => {
   const charObj = {
-    'id': 0,
-    'value' : ""
+    id: 0,
+    value: ''
   }
   return Characteristics_Reviews.findAll({
     attributes: ['id', 'value'],
@@ -278,14 +248,12 @@ const getCharReviewByCharId = (characteristics_id) => {
     .then((res) => res.forEach((char) => {
       charObj.id = char.id
       charObj.value = char.value
-
-  }))
-  .then(() => charObj)
+    }))
+    .then(() => charObj)
 }
 
 const getCharByProductId = (product_id) => {
-
-  const charObj = {}
+  const characteristics = {}
   return Characteristics.findAll({
     attributes: ['id', 'name'],
     where: {
@@ -295,17 +263,32 @@ const getCharByProductId = (product_id) => {
     .then(chars => {
       const result = []
       chars.forEach((char) => {
-        charObj[char.name] = {}
+        characteristics[char.name] = {}
+
+
         result.push(getCharReviewByCharId(char.id))
       })
       return Promise.all(result)
     })
-    .then((res) => res.forEach((charRev) => {
-      console.log(charRev)
-    }))
+    .then((res) => {
+      let count = 0
+      for (const name in characteristics) {
+        characteristics[name] = res[count]
+        count++
+      }
+    }
+    )
+    .then(() => characteristics)
+    .catch((err) => console.log(err))
 }
-console.log(getCharByProductId(1))
-// console.log(getRecommendByProductId(1))
+
+// const getMetaData = (product_id) => {
+//   const metaObj = {}
+//   return getRecommendByProductId(product_id)
+//   .then((res) => console.log(res))
+// }
+
+  //console.log(getMetaData(1))
 module.exports = {
-  getReviews
+  getReviews, getMetaData
 }
