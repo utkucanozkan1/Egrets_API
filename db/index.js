@@ -282,7 +282,7 @@ const getCharByProductId = (product_id) => {
     .catch((err) => console.log(err))
 }
 
-// PUT REQUESTS
+// PUT QUERIES
 
 const reviewHelpful = (review_id) => {
  return Reviews.update(
@@ -300,7 +300,22 @@ const reviewHelpful = (review_id) => {
     .catch((err) => console.log(err))
 }
 
-//console.log(reviewHelpful(1))
+const reviewReport = (review_id) => {
+  return Reviews.update(
+    { reported: true },
+    {
+      where: {
+        id: review_id
+      }
+    },
+    { timestamps: false },
+    { benchmark: true },
+    { logging: console.log }
+  )
+    .then((res) => res)
+    .catch((err) => console.log(err))
+}
+
 module.exports = {
-  getReviews, getMetaData, reviewHelpful
+  getReviews, getMetaData, reviewHelpful, reviewReport
 }

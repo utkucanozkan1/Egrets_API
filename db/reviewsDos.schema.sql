@@ -106,3 +106,8 @@ ADD
     CREATE INDEX characteristics_review_char_index ON characteristics_reviews (characteristics_id);
     CREATE INDEX characteristics_review_review_index ON characteristics_reviews (review_id);
     CREATE INDEX characteristics_product_id_index ON characteristics (product_id);
+
+    CREATE SEQUENCE review_id_seq
+INCREMENT 1
+START 1;
+SELECT setval('review_id_seq', (SELECT MAX(id) FROM reviews));
