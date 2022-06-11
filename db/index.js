@@ -67,6 +67,23 @@ const Photos = sequelize.define('photos', {
   }
 })
 
+
+const Characteristics_Reviews = sequelize.define('characteristics_reviews', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true
+  },
+  characteristics_id: {
+    type: DataTypes.INTEGER
+  },
+  review_id: {
+    type: DataTypes.INTEGER
+  },
+  value: {
+    type: DataTypes.INTEGER
+  }
+})
+
 const Characteristics = sequelize.define('characteristics', {
   id: {
     type: DataTypes.INTEGER,
@@ -78,22 +95,11 @@ const Characteristics = sequelize.define('characteristics', {
   name: {
     type: DataTypes.STRING
   }
-})
-
-const Characteristic_Reviews = sequelize.define('characteristic_reviews', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true
-  },
-  characteristic_id: {
-    type: DataTypes.INTEGER
-  },
-  review_id: {
-    type: DataTypes.INTEGER
-  },
-  value: {
-    type: DataTypes.INTEGER
-  }
+  // associate: (models) => {
+  //   Characteristics.belongsTo(models.Characteristic_Reviews, {
+  //     foreignKey: 'characteristic_id'
+  //   })
+  // }
 })
 
 const Review = (data) => (
@@ -184,6 +190,122 @@ const getReviews = (product_id, count = 5, page = 1, sort = 'relevant') => {
     })
 }
 
+const getRatingsByProductId = (product_id) => {
+  let ratingsObj = {
+    '1':0,
+    '2':0,
+    '3':0,
+    '4':0,
+    '5':0
+  }
+  return Reviews.findAll({
+    attributes: ['product_id', 'rating'],
+    where: {
+      product_id
+    },
+    benchmark: true,
+    logging: console.log
+  })
+    .then((res) => res.forEach((rating) => {
+      ratingsObj[rating.rating]++
+    }))
+    .then(() => ratingsObj)
+    .catch(err => console.log(err))
+}
+
+const getRecommendByProductId = (product_id) => {
+  const recommendedObj = {
+    "true":0,
+    "false":0
+  }
+  const ratingsObj = {
+    '1':0,
+    '2':0,
+    '3':0,
+    '4':0,
+    '5':0
+  }
+  const obj = {}
+  return Reviews.findAll({
+    attributes: ['product_id', 'recommend', 'rating'],
+    where: {
+      product_id
+    },
+    benchmark: true,
+    logging: console.log
+  })
+    .then((res) => res.forEach((rec) => {
+      recommendedObj[rec.recommend]++
+      ratingsObj[rec.rating]++
+    }))
+    .then(() => {
+      obj.ratings = ratingsObj
+      obj.recommended = recommendedObj
+    })
+    .then(() => {
+      return obj
+    })
+    .catch(err => console.log(err))
+}
+// this is returning an array of review IDs for a specific productID
+const getReviewsByReviewId = (product_id) => {
+  const reviewIdArr = []
+  return Reviews.findAll({
+    attributes: ['id'],
+    where: {
+      product_id,
+      reported: false
+    }
+  })
+    .then((res) => res.forEach((review) => {
+      reviewIdArr.push(review.id)
+    }))
+    .then(() => reviewIdArr)
+    .catch(err => console.log(err))
+}
+
+const getCharReviewByCharId = (characteristics_id) => {
+  const charObj = {
+    'id': 0,
+    'value' : ""
+  }
+  return Characteristics_Reviews.findAll({
+    attributes: ['id', 'value'],
+    where: {
+      characteristics_id
+    }
+  })
+    .then((res) => res.forEach((char) => {
+      charObj.id = char.id
+      charObj.value = char.value
+
+  }))
+  .then(() => charObj)
+}
+
+const getCharByProductId = (product_id) => {
+
+  const charObj = {}
+  return Characteristics.findAll({
+    attributes: ['id', 'name'],
+    where: {
+      product_id
+    }
+  })
+    .then(chars => {
+      const result = []
+      chars.forEach((char) => {
+        charObj[char.name] = {}
+        result.push(getCharReviewByCharId(char.id))
+      })
+      return Promise.all(result)
+    })
+    .then((res) => res.forEach((charRev) => {
+      console.log(charRev)
+    }))
+}
+console.log(getCharByProductId(1))
+// console.log(getRecommendByProductId(1))
 module.exports = {
   getReviews
 }

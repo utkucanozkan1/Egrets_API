@@ -101,4 +101,5 @@ ALTER TABLE
 ADD
     CONSTRAINT product_id_pkey PRIMARY KEY (id);
 
-    CREATE INDEX 
+    CREATE INDEX reviews_product_index ON reviews (product_id);
+    CREATE INDEX photos_review_index ON photos (review_id);
