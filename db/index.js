@@ -50,8 +50,10 @@ const Reviews = sequelize.define('reviews', {
     type: DataTypes.STRING
   },
   helpfulness: {
-    type: DataTypes.INTEGER
+    type: DataTypes.INTEGER,
   }
+}, {
+  timestamps: false
 })
 
 const Photos = sequelize.define('photos', {
@@ -96,8 +98,6 @@ const Characteristics = sequelize.define('characteristics', {
   }
 })
 
-// Characteristics.hasMany(Characteristics_Reviews,{foreignKey: 'characteristics_id'})
-// Characteristics_Reviews.belongsTo(Characteristics)
 const Review = (data) => (
   {
     review_id: data.id,
@@ -193,7 +193,7 @@ const getReviews = (product_id, count = 5, page = 1, sort = 'relevant') => {
     })
 }
 
-/// meta data Portion
+/// META DATA QUERIES
 const getMetaData = (product_id) => {
   const recommendedObj = {
     true: 0,
@@ -282,13 +282,25 @@ const getCharByProductId = (product_id) => {
     .catch((err) => console.log(err))
 }
 
-// const getMetaData = (product_id) => {
-//   const metaObj = {}
-//   return getRecommendByProductId(product_id)
-//   .then((res) => console.log(res))
-// }
+// PUT REQUESTS
 
-  //console.log(getMetaData(1))
+const reviewHelpful = (review_id) => {
+ return Reviews.update(
+    { helpfulness: sequelize.literal('helpfulness + 1') },
+    {
+      where: {
+        id: review_id
+      }
+    },
+    { timestamps: false },
+    { benchmark: true },
+    { logging: console.log }
+  )
+    .then((res) => res)
+    .catch((err) => console.log(err))
+}
+
+//console.log(reviewHelpful(1))
 module.exports = {
-  getReviews, getMetaData
+  getReviews, getMetaData, reviewHelpful
 }
