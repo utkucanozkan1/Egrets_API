@@ -1,5 +1,5 @@
 CREATE TABLE reviews(
-    "id" integer NOT NULL,
+    "id" SERIAL,
     "product_id" integer NOT NULL,
     "rating" integer NOT NULL,
     "date" bigint NOT NULL,
@@ -15,21 +15,21 @@ CREATE TABLE reviews(
 );
 
 CREATE TABLE "characteristics"(
-    "id" integer,
+    "id" SERIAL,
     "product_id" integer NOT NULL,
     "name" VARCHAR,
     CONSTRAINT characteristics_pkey PRIMARY KEY(id)
 );
 
 CREATE TABLE characteristics_reviews(
-    "id" integer NOT NULL,
+    "id" SERIAL,
     "characteristics_id" integer,
     "review_id" integer,
     "value" integer
 );
 
 CREATE TABLE photos(
-    "id" integer NOT NULL,
+    "id" SERIAL,
     "review_id" integer NOT NULL,
     "url" VARCHAR
 );
@@ -107,7 +107,7 @@ ADD
     CREATE INDEX characteristics_review_review_index ON characteristics_reviews (review_id);
     CREATE INDEX characteristics_product_id_index ON characteristics (product_id);
 
-    CREATE SEQUENCE review_id_seq
-INCREMENT 1
-START 1;
-SELECT setval('review_id_seq', (SELECT MAX(id) FROM reviews));
+
+SELECT setval('reviews_id_seq', (SELECT MAX(id) FROM reviews));
+SELECT setval('photos_id_seq', (SELECT MAX(id) FROM photos));
+SELECT setval('characteristics_id_seq', (SELECT MAX(id) FROM characteristics_reviews));

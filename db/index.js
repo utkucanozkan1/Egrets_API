@@ -4,7 +4,7 @@ const { Sequelize, DataTypes } = require('sequelize')
 const Promise = require('bluebird')
 require('dotenv').config()
 // Option 1: Passing a connection URI
-const sequelize = new Sequelize(`postgres://${process.env.PGUSER}:${process.env.PGPASSWORD}@localhost:${process.env.PGPORT}/sdc`)
+const sequelize = new Sequelize(`postgres://${process.env.PGUSER}:${process.env.PGPASSWORD}@localhost:${process.env.PGPORT}/sdctest`)
 sequelize.authenticate()
   .then(() => {
     console.log(`Connected to DB via Sequelize at Port ${process.env.PGPORT}`)
@@ -16,6 +16,7 @@ sequelize.authenticate()
 const Reviews = sequelize.define('reviews', {
   id: {
     type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true
   },
   product_id: {
@@ -50,7 +51,7 @@ const Reviews = sequelize.define('reviews', {
     type: DataTypes.STRING
   },
   helpfulness: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.INTEGER
   }
 }, {
   timestamps: false
@@ -59,6 +60,7 @@ const Reviews = sequelize.define('reviews', {
 const Photos = sequelize.define('photos', {
   id: {
     type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true
   },
   review_id: {
@@ -67,11 +69,14 @@ const Photos = sequelize.define('photos', {
   url: {
     type: DataTypes.STRING
   }
+}, {
+  timestamps: false
 })
 
 const Characteristics_Reviews = sequelize.define('characteristics_reviews', {
   id: {
     type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true
   },
   characteristics_id: {
@@ -83,14 +88,17 @@ const Characteristics_Reviews = sequelize.define('characteristics_reviews', {
   value: {
     type: DataTypes.INTEGER
   }
+}, {
+  timestamps: false
 })
 
 const Characteristics = sequelize.define('characteristics', {
   id: {
     type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true
   },
-  review_id: {
+  product_id: {
     type: DataTypes.INTEGER
   },
   name: {
@@ -265,7 +273,6 @@ const getCharByProductId = (product_id) => {
       chars.forEach((char) => {
         characteristics[char.name] = {}
 
-
         result.push(getCharReviewByCharId(char.id))
       })
       return Promise.all(result)
@@ -285,7 +292,7 @@ const getCharByProductId = (product_id) => {
 // PUT QUERIES
 
 const reviewHelpful = (review_id) => {
- return Reviews.update(
+  return Reviews.update(
     { helpfulness: sequelize.literal('helpfulness + 1') },
     {
       where: {
@@ -316,6 +323,51 @@ const reviewReport = (review_id) => {
     .catch((err) => console.log(err))
 }
 
+// POST REVIEW
+const addReview = (product_id, rating, summary, body, recommend, name, email, photos, characteristics) => {
+  return Reviews.create({
+    product_id,
+    rating,
+    date: Date.now(),
+    body,
+    summary,
+    recommend,
+    reported: false,
+    reviewer_name: name,
+    reviewer_email: email,
+    response: null,
+    helpfulness: 0
+  })
+    .then((data) => {
+      const photoArr = []
+      if (photos.length > 0) {
+        photos.forEach((photo) => (
+          photoArr.push(Photos.create({
+            review_id: data.id,
+            url: photo
+          }))
+        ))
+      }
+      for (const key in characteristics) {
+        // key is the characteristics_id , characteristics[key] is the value
+        photoArr.push(Characteristics_Reviews.update({
+          characteristics_id: key,
+          review_id: data.id,
+          value: sequelize.literal(` (value + ${characteristics[key]})/ 2`)
+        },
+        {
+          where: {
+            characteristics_id: key
+          }
+        })
+        )
+      }
+      return Promise.all(photoArr)
+    })
+    .then(data => data)
+    .catch(err => console.log(err))
+}
+
 module.exports = {
-  getReviews, getMetaData, reviewHelpful, reviewReport
+  getReviews, getMetaData, reviewHelpful, reviewReport, addReview
 }
