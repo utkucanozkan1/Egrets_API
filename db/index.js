@@ -141,9 +141,7 @@ const photosByReviewId = (review_id) => {
     attributes: ['id', 'url'],
     where: {
       review_id
-    },
-    benchmark: true,
-    logging: console.log
+    }
   })
     .then(res => res.forEach((photo) => {
       photos.push(Photo(photo))
@@ -162,9 +160,7 @@ const getReviewsByProductId = (product_id, count = 5, page = 1, sort = 'rating')
     offset: ((page - 1) * count),
     limit: count,
     order: [[sequelize.literal(`${sort}`), 'DESC']],
-    subQuery: false,
-    benchmark: true,
-    logging: console.log
+    subQuery: false
   })
     .then((res) => res.map((Review)))
     .catch(err => console.log(err))
@@ -219,9 +215,7 @@ const getMetaData = (product_id) => {
     attributes: ['product_id', 'recommend', 'rating'],
     where: {
       product_id
-    },
-    benchmark: true,
-    logging: console.log
+    }
   })
     .then((res) => res.forEach((rec) => {
       recommendedObj[rec.recommend]++
@@ -299,9 +293,7 @@ const reviewHelpful = (review_id) => {
         id: review_id
       }
     },
-    { timestamps: false },
-    { benchmark: true },
-    { logging: console.log }
+    { timestamps: false }
   )
     .then((res) => res)
     .catch((err) => console.log(err))
@@ -315,9 +307,7 @@ const reviewReport = (review_id) => {
         id: review_id
       }
     },
-    { timestamps: false },
-    { benchmark: true },
-    { logging: console.log }
+    { timestamps: false }
   )
     .then((res) => res)
     .catch((err) => console.log(err))
@@ -336,8 +326,9 @@ const addReview = (product_id, rating, summary, body, recommend, name, email, ph
     reviewer_name: name,
     reviewer_email: email,
     response: null,
-    helpfulness: 0
-  })
+    helpfulness: 0,
+  }
+  )
     .then((data) => {
       const photoArr = []
       if (photos.length > 0) {

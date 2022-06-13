@@ -1,9 +1,12 @@
 /* eslint-disable camelcase */
+// require('newrelic')
 require('dotenv').config()
 const express = require('express')
 const Promise = require('bluebird')
+const cors = require('cors')
 const db = require('../db')
 const app = express()
+app.use(cors())
 app.use(express.json())
 
 app.get('/reviews/:product_id', (req, res) => {
@@ -27,25 +30,21 @@ app.get('/reviews/meta/:product_id/', (req, res) => {
 })
 
 app.post('/reviews', (req, res) => {
-  console.log(req.body)
-
   const { product_id, rating, summary, body, recommend, name, email, photos, characteristics } = req.body
   db.addReview(product_id, rating, summary, body, recommend, name, email, photos, characteristics)
     .then((data) => {
       res.status(201).send()
     })
-    .catch(err => console.log(err))
+    .catch(() => res.status(500).send())
 })
 
 app.put('/reviews/:review_id/helpful', (req, res) => {
-  console.log(req.params)
   db.reviewHelpful(req.params.review_id)
     .then(() => res.status(204).send())
     .catch(() => res.status(500).send())
 })
 
 app.put('/reviews/:review_id/report', (req, res) => {
-  console.log(req.params)
   db.reviewReport(req.params.review_id)
     .then(() => res.status(204).send())
     .catch(() => res.status(500).send())
