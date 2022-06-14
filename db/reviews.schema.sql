@@ -1,55 +1,90 @@
-
-
-CREATE TABLE IF NOT EXISTS reviews (
-    "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    "product_id" INTEGER NOT NULL,
-    "rating" INTEGER,
-    "date" BIGINT,
-    "summary" TEXT,
-    "body" TEXT,
-    "recommend" BOOLEAN,
-    "reported" BOOLEAN,
-    "reviewer_name" VARCHAR,
+CREATE TABLE reviews(
+    "id" SERIAL,
+    "product_id" integer NOT NULL,
+    "rating" integer NOT NULL,
+    "date" bigint NOT NULL,
+    "summary" text NOT NULL,
+    "body" text,
+    "recommend" boolean,
+    "reported" boolean,
+    "reviewer_name" VARCHAR NOT NULL,
     "reviewer_email" VARCHAR,
     "response" VARCHAR,
-    "helpfulness" INTEGER
+    "helpfulness" integer NOT NULL,
+    CONSTRAINT "Primary key" PRIMARY KEY(id)
 );
 
-CREATE TABLE IF NOT EXISTS photos (
-    "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    "review_id" INTEGER REFERENCES reviews(id),
+CREATE TABLE "characteristics"(
+    "id" SERIAL,
+    "product_id" integer NOT NULL,
+    "name" VARCHAR,
+    CONSTRAINT characteristics_pkey PRIMARY KEY(id)
+);
+
+CREATE TABLE characteristics_reviews(
+    "id" SERIAL,
+    "characteristics_id" integer,
+    "review_id" integer,
+    "value" integer
+);
+
+CREATE TABLE photos(
+    "id" SERIAL,
+    "review_id" integer NOT NULL,
     "url" VARCHAR
 );
 
-CREATE TABLE IF NOT EXISTS characteristics (
-    "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    "product_id" INTEGER REFERENCES reviews,
-    "name" VARCHAR
-);
 
-CREATE TABLE IF NOT EXISTS characteristic_reviews (
-    "id" INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    "characteristic_id" INTEGER REFERENCES characteristics(id),
-    "review_id" INTEGER REFERENCES reviews(id),
-    "value" INTEGER
-);
+ALTER TABLE
+    characteristics_reviews
+ADD
+    CONSTRAINT characteristics_reviews_review_id_fkey FOREIGN KEY (review_id) REFERENCES reviews (id) ON DELETE No action ON UPDATE No action;
 
-CREATE TABLE IF NOT EXISTS product (
-  "product_id" INTEGER NOT NULL PRIMARY KEY REFERENCES reviews
-);
+ALTER TABLE
+    characteristics_reviews
+ADD
+    CONSTRAINT characteristics_reviews_characteristics_id_fkey FOREIGN KEY (characteristics_id) REFERENCES "characteristics" (id);
 
+ALTER TABLE
+    photos
+ADD
+    CONSTRAINT photos_review_id_fkey FOREIGN KEY (review_id) REFERENCES reviews (id);
+
+ALTER TABLE
+    photos
+ADD
+    CONSTRAINT photos_id_pkey PRIMARY KEY (id);
+
+ALTER TABLE
+    characteristics_reviews
+ADD
+    CONSTRAINT characteristics_id_pkey PRIMARY KEY (id);
 
 COPY reviews
 FROM
     '/Users/utkucanozkan/Desktop/OtherProjects/Reviews/csv/reviews.csv' csv header;
 
-COPY photos
-FROM '/Users/utkucanozkan/Desktop/OtherProjects/Reviews/csv/reviews_photos.csv' csv header;
-
 COPY characteristics
-FROM '/Users/utkucanozkan/Desktop/OtherProjects/Reviews/csv/characteristics.csv'
-csv header;
+FROM
+    '/Users/utkucanozkan/Desktop/OtherProjects/Reviews/csv/characteristics.csv' csv header;
 
-COPY characteristic_reviews
-FROM '/Users/utkucanozkan/Desktop/OtherProjects/Reviews/csv/characteristic_reviews.csv'
-csv header;
+COPY characteristics_reviews
+FROM
+    '/Users/utkucanozkan/Desktop/OtherProjects/Reviews/csv/characteristic_reviews.csv' csv header;
+
+COPY photos
+FROM
+    '/Users/utkucanozkan/Desktop/OtherProjects/Reviews/csv/reviews_photos.csv' csv header;
+
+
+    CREATE INDEX reviews_product_index ON reviews (product_id);
+    CREATE INDEX photos_review_index ON photos (review_id);
+    CREATE INDEX characteristics_review_char_index ON characteristics_reviews (characteristics_id);
+    CREATE INDEX characteristics_review_review_index ON characteristics_reviews (review_id);
+
+
+
+SELECT setval('reviews_id_seq', (SELECT MAX(id) FROM reviews));
+SELECT setval('photos_id_seq', (SELECT MAX(id) FROM photos));
+SELECT setval('characteristics_id_seq', (SELECT MAX(id) FROM characteristics_reviews));
+

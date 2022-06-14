@@ -107,4 +107,6 @@ dist
 csv/
 .csv/
 # DS Store
-.DS_Store 
+.DS_Store
+# pem
+sdc-testkey.pem

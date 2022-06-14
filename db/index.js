@@ -6,11 +6,11 @@ require('dotenv').config()
 // Option 1: Passing a connection URI
 const sequelize = new Sequelize(`postgres://${process.env.PGUSER}:${process.env.PGPASSWORD}@localhost:${process.env.PGPORT}/sdctest`)
 sequelize.authenticate()
-  .then(() => {
-    console.log(`Connected to DB via Sequelize at Port ${process.env.PGPORT}`)
-  }).catch((error) => {
-    console.error('Unable to connect to the database: ', error)
-  })
+  // .then(() => {
+  //   console.log(`Connected to DB via Sequelize at Port ${process.env.PGPORT}`)
+  // }).catch((error) => {
+  //   console.error('Unable to connect to the database: ', error)
+  // })
 
 // MODALS for SEQUELIZE
 const Reviews = sequelize.define('reviews', {
@@ -326,7 +326,7 @@ const addReview = (product_id, rating, summary, body, recommend, name, email, ph
     reviewer_name: name,
     reviewer_email: email,
     response: null,
-    helpfulness: 0,
+    helpfulness: 0
   }
   )
     .then((data) => {

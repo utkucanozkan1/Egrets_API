@@ -4,13 +4,15 @@ import { Counter } from 'k6/metrics'
 
 export const requests = new Counter('http_reqs')
 export const options = {
-  vus: 100,
+  vus: 30,
   duration: '15s'
 }
 
-const baseUrl = 'http://localhost:8080/reviews/meta'
+const baseUrl = 'http://localhost:8080/reviews'
 
 const generateRandomProductId = () => Math.floor(Math.random() * (1000011 - 900000) + 900000)
+
+// const generateRandomProductId = () => Math.floor(Math.random() * (1000 - 1) + 1000)
 
 export default function () {
   const url = `${baseUrl}/${generateRandomProductId()}`
