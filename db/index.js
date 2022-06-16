@@ -142,36 +142,36 @@ Reviews.belongsToMany(Characteristics, {
 
 
 // returns a photo array
-const photosByReviewId = (review_id) => {
-  const photos = []
-  return Photos.findAll({
-    attributes: ['id', 'url'],
-    where: {
-      review_id
-    }
-  })
-    .then(res => res.forEach((photo) => {
-      photos.push(Photo(photo))
-    }))
-    .then(() => photos)
-    .catch(err => 400)
-}
+// const photosByReviewId = (review_id) => {
+//   const photos = []
+//   return Photos.findAll({
+//     attributes: ['id', 'url'],
+//     where: {
+//       review_id
+//     }
+//   })
+//     .then(res => res.forEach((photo) => {
+//       photos.push(Photo(photo))
+//     }))
+//     .then(() => photos)
+//     .catch(err => 400)
+// }
 // returns a review object
-const getReviewsByProductId = (product_id, count = 5, page = 1, sort = 'rating') => {
-  return Reviews.findAll({
-    attributes: ['id', 'rating', 'summary', 'recommend', 'response', 'body', 'date', 'reviewer_name', 'helpfulness'],
-    where: {
-      product_id,
-      reported: false
-    },
-    offset: ((page - 1) * count),
-    limit: count,
-    order: [[sequelize.literal(`${sort}`), 'DESC']],
-    subQuery: false
-  })
-    .then((res) => res.map((Review)))
-    .catch(err => 400)
-}
+// const getReviewsByProductId = (product_id, count = 5, page = 1, sort = 'rating') => {
+//   return Reviews.findAll({
+//     attributes: ['id', 'rating', 'summary', 'recommend', 'response', 'body', 'date', 'reviewer_name', 'helpfulness'],
+//     where: {
+//       product_id,
+//       reported: false
+//     },
+//     offset: ((page - 1) * count),
+//     limit: count,
+//     order: [[sequelize.literal(`${sort}`), 'DESC']],
+//     subQuery: false
+//   })
+//     .then((res) => res.map((Review)))
+//     .catch(err => 400)
+// }
 
 // create a function that will run getReviewsByProductId first , have it return it's promise , take the reviewId
 // run photosByReviewId and return the promise , finally combine the two and return the final array
@@ -204,7 +204,7 @@ const getReviewsByProductId = (product_id, count = 5, page = 1, sort = 'rating')
 //     })
 // }
 
-function getReviews (id, page = 1, count = 5, sort = 'relevant') {
+const getReviews = (id, page = 1, count = 5, sort = 'relevant') => {
   if (sort === 'relevant') {
     sort = 'rating'
   } else if (sort === 'newest') {
@@ -241,7 +241,7 @@ function getReviews (id, page = 1, count = 5, sort = 'relevant') {
         photos: review.photos
       }
     }))
-    .catch(err => 400)
+    .catch(err => 'err')
 }
 
 /// META DATA QUERIES
@@ -327,7 +327,7 @@ const getCharByProductId = (product_id) => {
     }
     )
     .then(() => characteristics)
-    .catch((err) => 400)
+    .catch((err) => 'err')
 }
 
 // PUT QUERIES
@@ -357,7 +357,7 @@ const reviewReport = (review_id) => {
     { timestamps: false }
   )
     .then((res) => res)
-    .catch((err) => 400)
+    .catch((err) => 'err')
 }
 
 // POST REVIEW
@@ -403,7 +403,7 @@ const addReview = (product_id, rating, summary, body, recommend, name, email, ph
       return Promise.all(photoArr)
     })
     .then(data => data)
-    .catch(err => 400)
+    .catch(err => 'err')
 }
 
 module.exports = {

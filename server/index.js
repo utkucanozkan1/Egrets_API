@@ -28,7 +28,7 @@ app.get('/reviews/:product_id', (req, res) => {
       count: Number(req.query.count) || 5,
       results: reviews
     }))
-    .catch(err => console.error('Couldnt send response for reviews', err))
+    .catch(err => res.status(500).send(err))
 })
 
 app.get('/reviews/meta/:product_id/', (req, res) => {
