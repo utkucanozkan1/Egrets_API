@@ -5,12 +5,12 @@ const Promise = require('bluebird')
 require('dotenv').config()
 // Option 1: Passing a connection URI
 const sequelize = new Sequelize(`postgres://${process.env.PGUSER}:${process.env.PGPASSWORD}@localhost:${process.env.PGPORT}/sdctest`)
-sequelize.authenticate()
-  .then(() => {
-    console.log(`Connected to DB via Sequelize at Port ${process.env.PGPORT}`)
-  }).catch((error) => {
-    console.error('Unable to connect to the database: ', error)
-  })
+// sequelize.authenticate()
+//   .then(() => {
+//     console.log(`Connected to DB via Sequelize at Port ${process.env.PGPORT}`)
+//   }).catch((error) => {
+//     console.error('Unable to connect to the database: ', error)
+//   })
 
 // MODALS for SEQUELIZE
 const Reviews = sequelize.define('reviews', {
@@ -54,6 +54,7 @@ const Reviews = sequelize.define('reviews', {
     type: DataTypes.INTEGER
   }
 }, {
+  freezeTableName: true,
   timestamps: false
 })
 
@@ -70,6 +71,7 @@ const Photos = sequelize.define('photos', {
     type: DataTypes.STRING
   }
 }, {
+  freezeTableName: true,
   timestamps: false
 })
 
@@ -89,6 +91,7 @@ const Characteristics_Reviews = sequelize.define('characteristics_reviews', {
     type: DataTypes.INTEGER
   }
 }, {
+  freezeTableName: true,
   timestamps: false
 })
 
@@ -128,12 +131,16 @@ const Photo = (data) => (
   }
 )
 
-const Characteristics_Review = (data) => (
-  {
-    id: data.id,
-    value: data.value
-  }
-)
+Reviews.hasMany(Photos, {
+  foreignKey: 'review_id'
+})
+Reviews.belongsToMany(Characteristics, {
+  through: Characteristics_Reviews,
+  foreignKey: 'review_id',
+  otherKey: 'characteristics_id'
+})
+
+
 // returns a photo array
 const photosByReviewId = (review_id) => {
   const photos = []
@@ -147,7 +154,7 @@ const photosByReviewId = (review_id) => {
       photos.push(Photo(photo))
     }))
     .then(() => photos)
-    .catch(err => console.log(err))
+    .catch(err => 400)
 }
 // returns a review object
 const getReviewsByProductId = (product_id, count = 5, page = 1, sort = 'rating') => {
@@ -163,13 +170,41 @@ const getReviewsByProductId = (product_id, count = 5, page = 1, sort = 'rating')
     subQuery: false
   })
     .then((res) => res.map((Review)))
-    .catch(err => console.log(err))
+    .catch(err => 400)
 }
 
 // create a function that will run getReviewsByProductId first , have it return it's promise , take the reviewId
 // run photosByReviewId and return the promise , finally combine the two and return the final array
-const getReviews = (product_id, count = 5, page = 1, sort = 'relevant') => {
-  let reviewArr = []
+// const getReviews = (product_id, count = 5, page = 1, sort = 'relevant') => {
+//   let reviewArr = []
+//   if (sort === 'relevant') {
+//     sort = 'rating'
+//   } else if (sort === 'newest') {
+//     sort = 'date'
+//   } else if (sort === 'helpful') {
+//     sort = 'helpfulness'
+//   }
+//   return getReviewsByProductId(product_id, count, page, sort)
+//     .then((res) => {
+//       reviewArr = res
+//       const array = []
+//       reviewArr.forEach((rev) => {
+//         array.push(photosByReviewId(rev.review_id))
+//       })
+//       return Promise.all(array)
+//     })
+//     .then((res) => {
+//       res.forEach((photo, i) => {
+//         reviewArr[i].photos = photo
+//       })
+//       return reviewArr
+//     })
+//     .catch((err) => {
+//       400
+//     })
+// }
+
+function getReviews (id, page = 1, count = 5, sort = 'relevant') {
   if (sort === 'relevant') {
     sort = 'rating'
   } else if (sort === 'newest') {
@@ -177,24 +212,36 @@ const getReviews = (product_id, count = 5, page = 1, sort = 'relevant') => {
   } else if (sort === 'helpful') {
     sort = 'helpfulness'
   }
-  return getReviewsByProductId(product_id, count, page, sort)
-    .then((res) => {
-      reviewArr = res
-      const array = []
-      reviewArr.forEach((rev) => {
-        array.push(photosByReviewId(rev.review_id))
-      })
-      return Promise.all(array)
-    })
-    .then((res) => {
-      res.forEach((photo, i) => {
-        reviewArr[i].photos = photo
-      })
-      return reviewArr
-    })
-    .catch((err) => {
-      console.log(err)
-    })
+  return Reviews.findAll({
+    include: [
+      {
+        model: Photos,
+        attributes: ['id', 'url']
+      }
+    ],
+    where: {
+      product_id: id,
+      reported: false
+    },
+    limit: count,
+    offset: (page - 1) * count,
+    order: [[sequelize.literal(`${sort}`), 'DESC']]
+  })
+    .then(reviews => reviews.map(review => {
+      return {
+        review_id: review.id,
+        rating: review.rating,
+        summary: review.summary,
+        recommend: review.recommend,
+        response: review.response,
+        body: review.body,
+        date: new Date(Number(review.date)).toISOString(),
+        reviewer_name: review.reviewer_name,
+        helpfulness: review.helpfulness,
+        photos: review.photos
+      }
+    }))
+    .catch(err => 400)
 }
 
 /// META DATA QUERIES
@@ -280,7 +327,7 @@ const getCharByProductId = (product_id) => {
     }
     )
     .then(() => characteristics)
-    .catch((err) => console.log(err))
+    .catch((err) => 400)
 }
 
 // PUT QUERIES
@@ -310,7 +357,7 @@ const reviewReport = (review_id) => {
     { timestamps: false }
   )
     .then((res) => res)
-    .catch((err) => console.log(err))
+    .catch((err) => 400)
 }
 
 // POST REVIEW
@@ -356,7 +403,7 @@ const addReview = (product_id, rating, summary, body, recommend, name, email, ph
       return Promise.all(photoArr)
     })
     .then(data => data)
-    .catch(err => console.log(err))
+    .catch(err => 400)
 }
 
 module.exports = {

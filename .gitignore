@@ -110,3 +110,6 @@ csv/
 .DS_Store
 # pem
 sdc-testkey.pem
+amimages.pem
+backendAWS.pem
+nginxinstance.pem

@@ -9,15 +9,26 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+// app.get('/reviews/:product_id', (req, res) => {
+//   db.getReviews(req.params.product_id,req.query.count,req.query.page,req.query.sort)
+//     .then((data) => res.status(200).send({
+//       product: req.params.product_id,
+//       page: Number(req.query.page) || 1,
+//       count: Number(req.query.count) || 5,
+//       results: data
+//     }))
+//     .catch(err => res.status(500).send(err))
+// })
+
 app.get('/reviews/:product_id', (req, res) => {
-  db.getReviews(req.params.product_id,req.query.count,req.query.page,req.query.sort)
-    .then((data) => res.status(200).send({
+  db.getReviews(req.params.product_id, req.query.page, req.query.count)
+    .then(reviews => res.status(200).send({
       product: req.params.product_id,
       page: Number(req.query.page) || 1,
       count: Number(req.query.count) || 5,
-      results: data
+      results: reviews
     }))
-    .catch(err => res.status(500).send(err))
+    .catch(err => console.error('Couldnt send response for reviews', err))
 })
 
 app.get('/reviews/meta/:product_id/', (req, res) => {
