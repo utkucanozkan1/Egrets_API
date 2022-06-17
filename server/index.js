@@ -2,33 +2,72 @@
 // require('newrelic')
 require('dotenv').config()
 const express = require('express')
-const Promise = require('bluebird')
+const { promisify } = require('bluebird')
 const cors = require('cors')
 const db = require('../db')
+const redis = require('redis')
 const app = express()
+
+const client = redis.createClient({
+  host: '127.0.0.1',
+  port: 6379
+})
+
+client.connect()
+  .then(() => console.log('Redis is connected'))
+  .catch((err) => console.log('Error ' + err))
+
+
+
 app.use(cors())
 app.use(express.json())
 
-// app.get('/reviews/:product_id', (req, res) => {
-//   db.getReviews(req.params.product_id,req.query.count,req.query.page,req.query.sort)
-//     .then((data) => res.status(200).send({
-//       product: req.params.product_id,
-//       page: Number(req.query.page) || 1,
-//       count: Number(req.query.count) || 5,
-//       results: data
-//     }))
-//     .catch(err => res.status(500).send(err))
-// })
-
 app.get('/reviews/:product_id', (req, res) => {
-  db.getReviews(req.params.product_id, req.query.page, req.query.count)
-    .then(reviews => res.status(200).send({
-      product: req.params.product_id,
-      page: Number(req.query.page) || 1,
-      count: Number(req.query.count) || 5,
-      results: reviews
-    }))
-    .catch(err => res.status(500).send(err))
+  const { product_id } = req.params
+  client.exists(product_id)
+    .then((result) => {
+      if (result === 1) {
+        client.get(product_id)
+          .then((response) => {
+            res.status(200).send({
+              product: req.params.product_id,
+              page: Number(req.query.page) || 1,
+              count: Number(req.query.count) || 5,
+              results: JSON.parse(response)
+            })
+          })
+      } else {
+        db.getReviews(req.params.product_id, req.query.page, req.query.count)
+          .then(async (reviews) => {
+            await client.set(product_id, JSON.stringify(reviews))
+            res.status(200).send({
+              product: req.params.product_id,
+              page: Number(req.query.page) || 1,
+              count: Number(req.query.count) || 5,
+              results: reviews
+            })
+          })
+          .catch(err => res.status(500).send(err))
+      }
+    })
+  // if (existsAsync(product_id)) {
+  //   console.log('redis')
+  //   const response = getAsync(product_id)
+  //   console.log('response', response)
+  //  // res.status(200).send(JSON.parse(response))
+  // }
+  //   console.log('not redis')
+  //   db.getReviews(req.params.product_id, req.query.page, req.query.count)
+  //     .then(async (reviews) => {
+  //       await client.set(product_id, JSON.stringify(reviews))
+  //       res.status(200).send({
+  //         product: req.params.product_id,
+  //         page: Number(req.query.page) || 1,
+  //         count: Number(req.query.count) || 5,
+  //         results: reviews
+  //       })
+  //     })
+  //     .catch(err => res.status(500).send(err))
 })
 
 app.get('/reviews/meta/:product_id/', (req, res) => {

@@ -29,6 +29,7 @@
     "newrelic": "^8.14.1",
     "pg": "^8.7.3",
     "pg-hstore": "^2.3.4",
+    "redis": "^4.1.0",
     "sequelize": "^6.20.1"
   },
   "devDependencies": {

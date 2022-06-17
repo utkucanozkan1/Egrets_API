@@ -17,7 +17,7 @@ const generateRandomProductId = () => Math.floor(Math.random() * (1000011 - 9000
 export default function () {
   const url = `${baseUrl}/${generateRandomProductId()}`
   const res = http.get(url)
-  //sleep(0.001)
+  sleep(0.1)
   check(res, {
     'is status 200': r => r.status === 200,
     'transaction time < 200ms': r => r.timings.duration < 200,
