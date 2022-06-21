@@ -193,6 +193,8 @@ Status: 204 NO CONTENT
 | `Redis Caching` |  Caching of previously queried results|
 | `Horizontal Scaling & Load Balancing` |  Scaling of server instances and utilizing NGINX to load balance between servers |
 
-## Screenshots
+## Screenshots of Speed Test Results
 
+![Screen Shot 2022-06-16 at 4 58 17 PM](https://user-images.githubusercontent.com/98296753/174851752-1d611450-4308-4a30-b511-34f9925cf73d.jpg)
 
+![Screen Shot 2022-06-16 at 7 22 07 PM](https://user-images.githubusercontent.com/98296753/174851813-51ebacc5-04b6-4994-bc93-e9ec18d59304.jpg)
